@@ -451,12 +451,14 @@ const DATA = JSON.parse(document.getElementById('embedded-data').textContent);
       .on('click', (ev, d) => selectModule(d));
 
     simulation = d3.forceSimulation(nodes)
-      .force('charge', d3.forceManyBody().strength(-900))
-      .force('collide', d3.forceCollide().radius(d => d.r + 26).strength(1))
+      .force('charge', d3.forceManyBody().strength(-550))
+      .force('collide', d3.forceCollide().radius(d => d.r + 20).strength(1))
       .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('x', d3.forceX(width / 2).strength(d => edges.some(e => e.source === d.key || e.source.key === d.key || e.target === d.key || e.target.key === d.key) ? 0.02 : 0.09))
+      .force('y', d3.forceY(height / 2).strength(d => edges.some(e => e.source === d.key || e.source.key === d.key || e.target === d.key || e.target.key === d.key) ? 0.02 : 0.09))
       .force('link', d3.forceLink(edges).id(d => d.key)
-        .distance(d => 300 - Math.min(180, d.weight * 4))
-        .strength(d => Math.min(0.25, d.weight * 0.015)))
+        .distance(d => 190 - Math.min(110, d.weight * 3))
+        .strength(d => Math.min(0.35, 0.1 + d.weight * 0.015)))
       .on('tick', ticked);
 
     function ticked() {
@@ -571,11 +573,11 @@ const DATA = JSON.parse(document.getElementById('embedded-data').textContent);
       });
 
     simulation = d3.forceSimulation(nodes)
-      .force('charge', d3.forceManyBody().strength(-60))
-      .force('collide', d3.forceCollide().radius(9))
-      .force('link', d3.forceLink(links).id(d => d.id).distance(28).strength(0.25))
-      .force('x', d3.forceX(d => (layerCenters[d.layer] || layerCenters['Other']).x).strength(0.12))
-      .force('y', d3.forceY(d => (layerCenters[d.layer] || layerCenters['Other']).y).strength(0.12))
+      .force('charge', d3.forceManyBody().strength(-35))
+      .force('collide', d3.forceCollide().radius(8))
+      .force('link', d3.forceLink(links).id(d => d.id).distance(18).strength(0.4))
+      .force('x', d3.forceX(d => (layerCenters[d.layer] || layerCenters['Other']).x).strength(0.32))
+      .force('y', d3.forceY(d => (layerCenters[d.layer] || layerCenters['Other']).y).strength(0.32))
       .on('tick', () => {
         link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
             .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
@@ -592,7 +594,20 @@ const DATA = JSON.parse(document.getElementById('embedded-data').textContent);
   }
 
   backBtn.onclick = () => renderOverview();
-  svg.on('click', (ev) => { if (ev.target === svg.node()) closePanelMobile(); });
+  function deselectAll() {
+    closePanelMobile();
+    if (view === 'overview') {
+      currentModule = null;
+      nodeLayer.selectAll('g.module-node').classed('selected', false).classed('dim', false);
+      panelState = 'overview-hint';
+      renderPanel();
+    } else if (view === 'module') {
+      lastClickedNode = null;
+      panelState = 'drilldown-hint';
+      renderPanel();
+    }
+  }
+  svg.on('click', (ev) => { if (ev.target === svg.node()) deselectAll(); });
 
   searchBox.addEventListener('input', () => {
     const q = searchBox.value.trim().toLowerCase();
